@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+node_modules/
+npm-debug.log
+yarn-error.log
+
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+dist/
+build/
+*.log

@@ -9,17 +9,42 @@
     <meta name="author" content="Made by Tiny Studio">
     <meta name="robots" content="index, follow">
     <title>Kindle Highlights Export</title>
-    <link rel="icon" type="image/jpg" href="favicon.jpg">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <style>
+        :root {
+            --bg-color: #fafafa;
+            --text-color: #111;
+            --quote-bg: #f4f4f4;
+            --stats-color: #666;
+            --button-bg: #fff;
+            --button-text: #111;
+            --dropzone-bg: #fff;
+            --toast-bg: #333;
+            --toast-text: #fff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1e1e1e;
+                --text-color: #eee;
+                --quote-bg: #2c2c2c;
+                --stats-color: #aaa;
+                --button-bg: #2c2c2c;
+                --button-text: #eee;
+                --dropzone-bg: #2c2c2c;
+                --toast-bg: #555;
+                --toast-text: #fff;
+            }
+        }
+
         body {
             font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
             max-width: 720px;
             margin: 40px auto;
             padding: 0 16px;
             line-height: 1.7;
-            background-color: #fafafa;
-            color: #111;
+            background-color: var(--bg-color);
+            color: var(--text-color);
         }
 
         #dropzone {
@@ -28,14 +53,24 @@
             text-align: center;
             margin-bottom: 24px;
             cursor: pointer;
-            background-color: #fff;
+            background-color: var(--dropzone-bg);
             border-radius: 12px;
+        }
+
+        button {
+            margin: 16px 8px 16px 0;
+            cursor: pointer;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: 1px solid #888;
+            border-radius: 6px;
+            padding: 6px 12px;
         }
 
         blockquote {
             padding: 16px 20px;
             margin: 4px 0;
-            background-color: #f4f4f4;
+            background-color: var(--quote-bg);
             font-size: 1.05em;
             font-style: italic;
             border-left: none;
@@ -55,20 +90,15 @@
             padding: 2px 6px;
             margin-left: 12px;
             cursor: pointer;
-            color: #555;
             background: none;
             border: none;
+            color: var(--button-text);
         }
 
         #stats p {
             font-size: 0.85em;
-            color: #666;
+            color: var(--stats-color);
             margin-bottom: 8px;
-        }
-
-        button {
-            margin: 16px 0;
-            cursor: pointer;
         }
 
         label {
@@ -76,6 +106,12 @@
             margin: 12px 0;
             font-size: 0.9em;
             color: #333;
+        }
+
+        /* Toasts */
+        #toast-container div {
+            background-color: var(--toast-bg) !important;
+            color: var(--toast-text) !important;
         }
     </style>
 </head>
@@ -216,8 +252,8 @@
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.textContent = message;
-            toast.style.background = '#333';
-            toast.style.color = '#fff';
+            toast.style.background = 'var(--toast-bg)';
+            toast.style.color = 'var(--toast-text)';
             toast.style.padding = '10px 16px';
             toast.style.marginTop = '8px';
             toast.style.borderRadius = '6px';
