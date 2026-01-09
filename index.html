@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="A simple web tool to parse Kindle highlights and export them to Markdown or copy to clipboard. Drag and drop your My Clippings.txt file and get organized highlights.">
+    <meta name="author" content="Made by Tiny Studio">
+    <meta name="robots" content="index, follow">
+    <title>Kindle Highlights Export</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 16px;
+            line-height: 1.5;
+        }
+
+        #dropzone {
+            border: 2px dashed #999;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 24px;
+            cursor: pointer;
+        }
+
+        blockquote {
+            border-left: 3px solid #ccc;
+            padding-left: 12px;
+            margin: 24px 0;
+        }
+
+        footer {
+            color: #555;
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+
+        button {
+            margin: 16px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Kindle Highlights</h1>
+
+    <div id="dropzone">Drag and drop My Clippings.txt here</div>
+    <input type="file" id="fileInput" accept=".txt" hidden />
+
+    <button id="exportBtn" disabled>Export to Markdown</button>
+    <button id="copyBtn" disabled>Copy to Clipboard</button>
+
+    <div id="output"></div>
+
+    <script>
+        let highlights = [];
+
+        function parseClippings(text) {
+            return text
+                .split('==========')
+                .map(b => b.replace('\uFEFF', '').trim())
+                .filter(Boolean)
+                .map(block => {
+                    const lines = block.split('\n').map(l => l.trim());
+
+                    if (lines.length < 3) return null;
+
+                    const header = lines[0];
+
+                    const emptyLineIndex = lines.findIndex((l, i) => i > 0 && l === '');
+                    if (emptyLineIndex === -1) return null;
+
+                    let quoteLines = lines.slice(emptyLineIndex + 1).filter(Boolean);
+                    if (quoteLines.length === 0) return null;
+
+                    let quote = quoteLines.join('\n');
+
+                    quote = quote.replace(/^[\s—"«“]+/, '');
+
+                    quote = quote.replace(/[\s—"»”]+$/g, '');
+                    const lastCharOriginal = quoteLines.join('\n').trim().slice(-1);
+                    if (/[.!?]/.test(lastCharOriginal) && !/[.!?]$/.test(quote)) {
+                        quote += lastCharOriginal;
+                    }
+
+                    let book = header;
+                    let author = null;
+
+                    const match = header.match(/^(.*?)(?:\s*\((.*)\))?$/);
+                    if (match) {
+                        book = match[1].trim();
+                        author = match[2]?.trim() || null;
+                    }
+
+                    return { book, author, quote };
+                })
+                .filter(Boolean);
+        }
+
+        function groupByBook(items) {
+            const grouped = {};
+            items.forEach(h => {
+                const key = h.book + (h.author ? ' — ' + h.author : '');
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(h.quote);
+            });
+            return grouped;
+        }
+
+        function render(items) {
+            const out = document.getElementById('output');
+            const grouped = groupByBook(items);
+            out.innerHTML = Object.entries(grouped).map(([book, quotes]) => `
+            <h2>${escapeHtml(book)}</h2>
+            ${quotes.map(q => `<blockquote><p>${escapeHtml(q).replace(/\n/g, '<br>')}</p></blockquote>`).join('')}
+          `).join('');
+        }
+
+        function toMarkdown(items) {
+            const grouped = groupByBook(items);
+            return Object.entries(grouped).map(([book, quotes]) => {
+                return `### ${book}\n\n` + quotes.map(q => `> ${q.replace(/\n/g, '\n> ')}`).join('\n\n');
+            }).join('\n\n');
+        }
+
+        function downloadMarkdown(md) {
+            const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'kindle-highlights.md';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyToClipboard(items) {
+            const md = toMarkdown(items);
+            navigator.clipboard.writeText(md)
+                .then(() => alert('Highlights copied to clipboard'))
+                .catch(() => alert('Failed to copy highlights'));
+        }
+
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            copyToClipboard(highlights);
+        });
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, m => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            })[m]);
+        }
+
+        function readFile(file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                highlights = parseClippings(reader.result);
+                render(highlights);
+                document.getElementById('exportBtn').disabled = highlights.length === 0;
+                document.getElementById('copyBtn').disabled = highlights.length === 0;
+            };
+            reader.readAsText(file);
+        }
+
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        dropzone.addEventListener('dragover', e => {
+            e.preventDefault();
+        });
+
+        dropzone.addEventListener('drop', e => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file) readFile(file);
+        });
+
+        fileInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (file) readFile(file);
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            downloadMarkdown(toMarkdown(highlights));
+        });
+    </script>
+
+</body>
+
+</html>
