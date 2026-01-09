@@ -10,6 +10,21 @@
     <meta name="robots" content="index, follow">
     <title>Kindle Highlights Export</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <!-- Yandex.Metrika -->
+    <script type="text/javascript">
+        (function (m, e, t, r, i, k, a) {
+            m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments) };
+            m[i].l = 1 * new Date();
+            for (var j = 0; j < document.scripts.length; j++) { if (document.scripts[j].src === r) { return; } }
+            k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
+        })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=106183812', 'ym');
+
+        ym(106183812, 'init', { ssr: true, webvisor: true, clickmap: true, ecommerce: "dataLayer", accurateTrackBounce: true, trackLinks: true });
+    </script>
+    <noscript>
+        <div><img src="https://mc.yandex.ru/watch/106183812" style="position:absolute; left:-9999px;" alt="" /></div>
+    </noscript>
+    <!-- /Yandex.Metrika -->
     <style>
         :root {
             --bg-color: #fafafa;
@@ -173,11 +188,11 @@
                 })
                 .filter(Boolean)
                 .reduce((acc, item) => {
-                  if (!acc.seen.has(item.quote)) {
-                    acc.seen.add(item.quote);
-                    acc.items.push(item);
-                  }
-                  return acc;
+                    if (!acc.seen.has(item.quote)) {
+                        acc.seen.add(item.quote);
+                        acc.items.push(item);
+                    }
+                    return acc;
                 }, { seen: new Set(), items: [] }).items;
         }
 
@@ -204,18 +219,18 @@
         }
 
         function toMarkdown(items) {
-          const grouped = groupByBook(items);
-          const books = Object.keys(grouped);
+            const grouped = groupByBook(items);
+            const books = Object.keys(grouped);
 
-          const toc = books.map(b => `- ${b}`).join('\n');
+            const toc = books.map(b => `- ${b}`).join('\n');
 
-          const body = books.map(book => {
-            const quotes = grouped[book];
-            return `### ${book}\n\n` +
-              quotes.map(q => `> ${q.replace(/\n/g, '\n> ')}`).join('\n\n');
-          }).join('\n\n');
+            const body = books.map(book => {
+                const quotes = grouped[book];
+                return `### ${book}\n\n` +
+                    quotes.map(q => `> ${q.replace(/\n/g, '\n> ')}`).join('\n\n');
+            }).join('\n\n');
 
-          return `## Contents\n${toc}\n\n${body}`;
+            return `## Contents\n${toc}\n\n${body}`;
         }
 
         function downloadMarkdown(md) {
@@ -236,16 +251,20 @@
         }
 
         function copyBook(bookKey) {
-          const grouped = groupByBook(highlights);
-          const quotes = grouped[bookKey];
-          if (!quotes) return;
+            const grouped = groupByBook(highlights);
+            const quotes = grouped[bookKey];
+            if (!quotes) return;
 
-          const md = `### ${bookKey}\n\n` +
-            quotes.map(q => `> ${q.replace(/\n/g, '\n> ')}`).join('\n\n');
+            const md = `### ${bookKey}\n\n` +
+                quotes.map(q => `> ${q.replace(/\n/g, '\n> ')}`).join('\n\n');
 
-          navigator.clipboard.writeText(md)
-            .then(() => showToast(`Copied "${bookKey}"`))
-            .catch(() => showToast(`Failed to copy "${bookKey}"`));
+            navigator.clipboard.writeText(md)
+                .then(() => showToast(`Copied "${bookKey}"`))
+                .catch(() => showToast(`Failed to copy "${bookKey}"`));
+
+            if (typeof ym === 'function') {
+                ym(106183812, 'reachGoal', 'copy_book', { book: bookKey });
+            }
         }
 
         function showToast(message) {
@@ -276,16 +295,19 @@
 
         document.getElementById('copyBtn').addEventListener('click', () => {
             copyToClipboard(highlights);
+            if (typeof ym === 'function') {
+                ym(106183812, 'reachGoal', 'copy_clipboard');
+            }
         });
 
         function renderStats(items) {
-          const stats = document.getElementById('stats');
-          const books = new Set(items.map(i => i.book));
-          const avgLen = items.length
-            ? Math.round(items.reduce((s, i) => s + i.quote.length, 0) / items.length)
-            : 0;
+            const stats = document.getElementById('stats');
+            const books = new Set(items.map(i => i.book));
+            const avgLen = items.length
+                ? Math.round(items.reduce((s, i) => s + i.quote.length, 0) / items.length)
+                : 0;
 
-          stats.innerHTML = `
+            stats.innerHTML = `
             <p>
               <strong>${items.length}</strong> highlights ·
               <strong>${books.size}</strong> books ·
@@ -338,10 +360,14 @@
 
         document.getElementById('exportBtn').addEventListener('click', () => {
             downloadMarkdown(toMarkdown(highlights));
+            if (typeof ym === 'function') {
+                ym(106183812, 'reachGoal', 'export_markdown');
+            }
         });
     </script>
 
-    <div id="toast-container" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999;"></div>
+    <div id="toast-container"
+        style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999;"></div>
 </body>
 
 </html>
